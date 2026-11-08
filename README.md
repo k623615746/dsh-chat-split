@@ -22,6 +22,34 @@
 - **空屏直接选**：格子里「选择对话」按工作区分组列出所有对话，支持搜索；已在其它屏的会话会标「已在用」。
 - **记忆**：分屏组合（会话 id、当前屏、铺满状态）存在 `localStorage` 的 `dcs.split.v1`，重开面板原样回来。
 
+## 安装
+
+三种方式，任选一种（都需要能跑 pnpm 的 DSH 环境）：
+
+```bash
+# 1) npm（发布后可用，包名 dsh-chat-split）
+dsh plugin install dsh-chat-split
+
+# 2) 直接从 GitHub 装
+dsh plugin install github:k623615746/dsh-chat-split
+
+# 3) 用 Release 里的打包文件
+dsh plugin install https://github.com/k623615746/dsh-chat-split/releases/download/v0.1.0/dsh-chat-split-0.1.0.tgz
+```
+
+在 GUI 里装：**插件市场 → 安装**，把上面第 2/3 行的 spec 粘进输入框即可；装完勾选启用，刷新页面，左侧栏就多一个「对话分屏」。
+
+本地开发时也可以直接链目录：`dsh plugin install link:/absolute/path/to/dsh-chat-split`（改完 `npm run build` 再刷新）。
+
+## 开发
+
+```bash
+npm run build          # src/client/*.js → lib/client.js
+node scripts/check.mjs # 注册表 / 槽声明 / 持久化 key 的静态自检
+```
+
+`src/client` 里的片段按文件名顺序拼接进同一个 loader factory，共享作用域，所以顺序有意义（`01-shared` 的常量必须在最前，`09-apply` 最后装配）。
+
 ## 用起来
 
 1. 左侧栏图标里找四宫格（`对话分屏`），点一下进入。
