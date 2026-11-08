@@ -1,0 +1,11 @@
+# dsh-chat-split bundle patch
+#
+# 纯 insert 形态：DSH loader 对「纯新增行」支持热挂载，改完不必重启宿主进程
+# （客户端 chunk 仍要刷新页面）。patch 里不写死本机路径，全部用包名。
+#
+# 重复挂载守卫：同一个包若已被别的 entry id 挂过一次（例如用户手工往
+# cordis.patch.yml 里加过一行），这一行自动禁用，避免左栏出现两个图标。
+- insert:
+    - id: chat-split
+      name: 'dsh-chat-split'
+      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === 'dsh-chat-split' && e.options.id !== 'chat-split' && !e.disabled)"

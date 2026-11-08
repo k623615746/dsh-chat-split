@@ -1,0 +1,61 @@
+{
+  "name": "dsh-chat-split",
+  "version": "0.1.0",
+  "description": "DSH 分屏对话插件：左侧栏入口 + 最多 4 屏并行对话，拖拽会话入屏、1/2/3/4 屏自动排布、单屏铺满、每屏自带标题头，宿主顶栏与侧栏原样保留。",
+  "type": "module",
+  "main": "lib/index.js",
+  "icon": "icon.svg",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "locale",
+    "docs",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
+    },
+    "manifestVersion": 1
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "split",
+    "panes"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "node scripts/build-client.mjs",
+    "prepublishOnly": "node scripts/build-client.mjs"
+  },
+  "author": {
+    "name": "YG"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/k623615746/dsh-chat-split.git"
+  },
+  "homepage": "https://github.com/k623615746/dsh-chat-split#readme",
+  "bugs": {
+    "url": "https://github.com/k623615746/dsh-chat-split/issues"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "split.title": "Chat split",
+  "split.hint": "Up to four panes across workspaces",
+  "split.add": "Add a pane",
+  "split.remove": "Remove a pane",
+  "split.focus": "Fill this pane",
+  "split.unfocus": "Restore split",
+  "split.clear": "Empty this pane",
+  "split.close": "Close this pane",
+  "split.empty.title": "Empty pane",
+  "split.empty.pick": "Pick a chat",
+  "split.picker.search": "Search chats or workspaces",
+  "split.picker.empty": "No chats yet — create one in the sidebar first.",
+  "split.picker.used": "In use",
+  "split.back": "Back to chat"
+}
