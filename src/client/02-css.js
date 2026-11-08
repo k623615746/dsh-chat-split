@@ -309,6 +309,39 @@ html[data-dcs-drop="1"] [data-slot="main"] [data-conversation-session]{
   font-size:var(--dsw-font-size-body,13px);font-weight:600;color:var(--dsw-alias-label-primary);
 }
 .dcs-panehead[data-empty] .dcs-panehead-title{font-weight:400;color:var(--dsw-alias-label-tertiary)}
+/* 工作模式（标准/PTC/极简/创造）与子智能体数量：跟在标题后面，长了也不挤掉标题 */
+.dcs-panehead-chip{
+  flex:none;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:var(--dsw-font-size-caption,11px);color:var(--dsw-alias-label-secondary);
+  background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2));
+  border-radius:var(--dsw-radius-xs,4px);padding:1px 6px;
+}
+/* 子智能体：计数当按钮，点开是这一屏自己的清单（标题 + 运行点），再点一条放进另一屏 */
+.dcs-panehead-sub{position:relative;flex:none;display:inline-flex;min-width:0;max-width:none}
+.dcs-panehead-subbtn{
+  display:inline-flex;align-items:center;gap:3px;cursor:pointer;font:inherit;
+  max-width:none;white-space:nowrap;
+  border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2);
+  font-size:var(--dsw-font-size-caption,11px);color:var(--dsw-alias-label-secondary);
+}
+.dcs-panehead-subbtn:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
+.dcs-panehead-subbtn[data-open="1"]{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2))}
+.dcs-caret{font-size:9px;line-height:1;opacity:.7}
+.dcs-sublist{
+  position:absolute;top:calc(100% + 6px);right:0;z-index:30;min-width:200px;width:max-content;max-width:min(320px,62vw);
+  max-height:264px;overflow:auto;padding:4px;
+  border-radius:var(--dsw-radius-md);background:var(--dsw-alias-bg-layer-2);
+  border:1px solid var(--dsw-alias-border-l2);box-shadow:var(--dsw-elevation-prominent,var(--dsw-elevation-panel));
+}
+.dcs-subrow{
+  display:flex;align-items:center;gap:6px;width:100%;padding:5px 8px;
+  border:none;border-radius:var(--dsw-radius-xs,4px);background:transparent;
+  color:var(--dsw-alias-label-primary);font-size:12px;line-height:18px;text-align:left;cursor:pointer;
+}
+.dcs-subrow:hover{background:var(--dsw-alias-interactive-bg-hover)}
+.dcs-subrow-dot{flex:none;width:6px;height:6px;border-radius:999px;background:var(--dsw-alias-border-l3)}
+.dcs-subrow-dot[data-running="1"]{background:var(--dsw-alias-state-business-primary)}
+.dcs-subrow-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dcs-panehead-dot{flex:none;width:6px;height:6px;border-radius:999px;background:transparent}
 .dcs-panehead-dot[data-running]{background:var(--dsw-alias-state-business-primary)}
 .dcs-panehead-tools{flex:none;display:flex;align-items:center;gap:2px;opacity:.35;transition:opacity 120ms ease}

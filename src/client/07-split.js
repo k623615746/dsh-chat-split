@@ -28,7 +28,7 @@ function pickInitialSession(sessions, workspaceState) {
 
 /** kit 下发的 hook 可能缺席（老版本宿主），缺席时返回 undefined 而不是打断渲染。 */
 function useSessionsSnapshot(hook) {
-  return typeof hook === 'function' ? hook((snapshot) => snapshot.byId) : undefined
+  return typeof hook === 'function' ? hook((snapshot) => snapshot) : undefined
 }
 
 function useWorkspacesSnapshot(hook) {
@@ -130,16 +130,22 @@ function SplitControls(props) {
 }
 
 function SplitPanel(props) {
-  const { services, renderSlot, SessionProvider, useSessions, useWorkspaces, variant, slot, hideControls, onCloseSplit } = props
+  const { services, renderSlot, SessionProvider, useSessions, useWorkspaces, variant, slot, hideControls, onCloseSplit, lang } = props
   // 'overlay' = 挂在宿主会话正文区里（顶栏归宿主）；'panel' = 侧栏入口打开的独立面板。
   const inOverlay = variant === 'overlay'
   const state = useSplitState()
   const layout = services === null || services === undefined ? undefined : services.layout
   // 会话/工作区快照只能来自 kit 下发的 hook —— ctx.sessions / ctx.workspaces 的服务面上
   // 没有 list 快照属性，早先读服务属性拿到的是 undefined，选择器因此永远是空的。
-  const byId = useSessionsSnapshot(useSessions)
+  const sessionsSnapshot = useSessionsSnapshot(useSessions)
   const workspaceState = useWorkspacesSnapshot(useWorkspaces)
-  const list = useMemo(() => ({ byId: byId === undefined || byId === null ? {} : byId }), [byId])
+  const list = useMemo(
+    () => ({
+      byId: sessionsSnapshot === undefined || sessionsSnapshot === null || sessionsSnapshot.byId === undefined ? {} : sessionsSnapshot.byId,
+      projectionsBySession: sessionsSnapshot === undefined || sessionsSnapshot === null || sessionsSnapshot.projectionsBySession === undefined ? {} : sessionsSnapshot.projectionsBySession,
+    }),
+    [sessionsSnapshot],
+  )
   const panes = state.panes.length > 0 ? state.panes : [{ key: 'fallback', sessionId: '' }]
   const count = panes.length
   const focusedIndex = state.focus
@@ -201,6 +207,14 @@ function SplitPanel(props) {
   const onSwap = useCallback((from, to) => {
     swapPanes(from, to)
   }, [])
+  // 点开某屏的子智能体清单后选一条：复用「拖入即分屏」的那套落位规则。
+  // 四屏全满时没有空位可用，就把「点出清单的那一屏」让给对方 —— 就近替换，语义可预期。
+  const onOpenSubagent = useCallback((index, sessionId) => {
+    const placed = onDropSession(sessionId)
+    if (placed >= 0) return
+    setPaneSession(index, sessionId)
+    setActivePane(index)
+  }, [onDropSession])
   const onActivate = useCallback((index) => {
     setActivePane(index)
   }, [])
@@ -242,12 +256,14 @@ function SplitPanel(props) {
           renderSlot,
           SessionProvider,
           slot,
+          lang: lang === 'en' ? 'en' : 'zh',
           usedIds,
           isActive: activeIndex === index,
           focusedIndex,
           canClose: count > 1,
           onAssign,
           onDropSession,
+          onOpenSubagent,
           onSwap,
           onActivate,
           onFocusToggle,

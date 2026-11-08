@@ -110,14 +110,105 @@ function PaneEmpty(props) {
   )
 }
 
+/**
+ * 会话的工作模式（Agent preset）文案。
+ * id 来自会话列表行的 `projectionValues.agentPreset`；shipped 的四个预设由宿主
+ * 自己的词表翻译（`dsh-client-ui-agent-preset` 的 preset*Name），自定义预设只能显示原 id。
+ */
+const PRESET_NAMES = {
+  standard: { zh: '标准模式', en: 'Standard mode' },
+  ptc: { zh: 'PTC 模式', en: 'PTC mode' },
+  minimal: { zh: '极简模式', en: 'Minimal mode' },
+  cordis: { zh: '创造模式', en: 'Creator mode' },
+}
+
+function presetLabel(sessionId, list, lang) {
+  if (list === null || list === undefined || list.byId === undefined) return ''
+  const row = list.byId[sessionId]
+  if (row === undefined || row === null) return ''
+  const projections = row.projectionValues
+  const id = projections === undefined || projections === null ? undefined : projections.agentPreset
+  if (typeof id !== 'string' || id.length === 0) return ''
+  const known = PRESET_NAMES[id]
+  if (known === undefined) return id
+  return lang === 'en' ? known.en : known.zh
+}
+
+/**
+ * 该会话名下的子智能体清单（顶栏那个下拉用的是同一份数据）：
+ * 优先读宿主投影的 `subagentCatalog`（entry.id / entry.label / entry.activity），
+ * 退路是按列表行的 parentSessionId 数；运行状态优先取会话列表行，其次取投影。
+ */
+function subagentEntries(sessionId, list) {
+  if (list === null || list === undefined) return []
+  const byId = list.byId === undefined || list.byId === null ? {} : list.byId
+  const projections = list.projectionsBySession
+  let catalog
+  if (projections !== undefined && projections !== null) {
+    const entry = projections[sessionId]
+    const values = entry === null || entry === undefined ? undefined : entry.values
+    catalog = values === undefined || values === null ? undefined : values.subagentCatalog
+  }
+  if (!Array.isArray(catalog)) {
+    const fallback = []
+    for (const key in byId) {
+      const row = byId[key]
+      if (row === null || row === undefined) continue
+      if (row.parentSessionId !== sessionId) continue
+      fallback.push({ id: key, label: typeof row.title === 'string' && row.title.length > 0 ? row.title : key, running: row.running === true })
+    }
+    return fallback
+  }
+  const rows = []
+  for (const entry of catalog) {
+    if (entry === null || entry === undefined) continue
+    const id = typeof entry.id === 'string' ? entry.id : ''
+    if (id.length === 0) continue
+    const row = byId[id]
+    const rowTitle = row === null || row === undefined ? '' : typeof row.title === 'string' ? row.title : ''
+    const label = rowTitle.length > 0 ? rowTitle : typeof entry.label === 'string' && entry.label.length > 0 ? entry.label : id
+    const rowRunning = row !== null && row !== undefined && row.running === true
+    rows.push({ id, label, running: rowRunning || entry.activity === 'running' })
+  }
+  return rows
+}
+
 function PaneCell(props) {
-  const { index, pane, services, list, workspaceState, renderSlot, SessionProvider, slot, usedIds, isActive, focusedIndex, canClose, onAssign, onDropSession, onSwap, onActivate, onFocusToggle, onClear, onClose } = props
+  const { index, pane, services, list, workspaceState, renderSlot, SessionProvider, slot, lang, usedIds, isActive, focusedIndex, canClose, onAssign, onDropSession, onSwap, onActivate, onFocusToggle, onClear, onClose, onOpenSubagent } = props
   const paneSlot = typeof slot === 'string' && slot.length > 0 ? slot : SLOT_PANE
   const sessions = services === undefined || services === null ? undefined : services.sessions
   const hasSession = typeof pane.sessionId === 'string' && pane.sessionId.length > 0
   const info = describeSession(list, pane.sessionId)
   const row = hasSession && list !== null && list !== undefined && list.byId ? list.byId[pane.sessionId] : undefined
   const known = row !== undefined && row !== null
+  const presetText = known ? presetLabel(pane.sessionId, list, lang) : ''
+  const subagents = known ? subagentEntries(pane.sessionId, list) : []
+  const [subOpen, setSubOpen] = useState(false)
+  const subRef = useRef(null)
+
+  // 子智能体清单：点外面或按 Esc 收起。
+  useEffect(() => {
+    if (!subOpen) return undefined
+    const onPointerDown = (event) => {
+      const root = subRef.current
+      if (root !== null && root !== undefined && event.target instanceof Node && root.contains(event.target)) return
+      setSubOpen(false)
+    }
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setSubOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [subOpen])
+
+  // 换了会话 / 换了屏位就收起清单。
+  useEffect(() => {
+    setSubOpen(false)
+  }, [pane.key, pane.sessionId])
   const reference = useSessionReference(sessions, pane.sessionId, known)
   const [dropping, setDropping] = useState(false)
   const [notice, setNotice] = useState(null)
@@ -229,6 +320,56 @@ function PaneCell(props) {
       h('span', { className: 'dcs-panehead-index' }, String(index + 1)),
       workspace !== null && hasSession ? h('span', { className: 'dcs-panehead-ws' }, workspace.title) : null,
       h('span', { className: 'dcs-panehead-title' }, label),
+      presetText.length > 0 ? h('span', { className: 'dcs-panehead-chip' }, presetText) : null,
+      // 子智能体：和顶栏那个下拉同一份数据，点开能看每一条的具体标题与运行状态，
+      // 再点一条就把它放进另一屏（空屏 → 落进去；已开 → 跳过去；没有空屏且未满 → 新开一屏）。
+      subagents.length > 0
+        ? h(
+            'span',
+            { className: 'dcs-panehead-sub', ref: subRef },
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'dcs-panehead-chip dcs-panehead-subbtn',
+                'data-open': subOpen ? '1' : undefined,
+                title: lang === 'en' ? 'Show subagents' : '展开子智能体',
+                'aria-expanded': subOpen ? 'true' : 'false',
+                onClick: (event) => {
+                  event.stopPropagation()
+                  setSubOpen((value) => !value)
+                },
+              },
+              String(subagents.length) + (lang === 'en' ? ' subagents' : ' 个子智能体'),
+              h('span', { className: 'dcs-caret', 'aria-hidden': 'true' }, '▾'),
+            ),
+            subOpen
+              ? h(
+                  'div',
+                  { className: 'dcs-sublist', role: 'menu' },
+                  subagents.map((entry) =>
+                    h(
+                      'button',
+                      {
+                        key: entry.id,
+                        type: 'button',
+                        role: 'menuitem',
+                        className: 'dcs-subrow',
+                        title: entry.label,
+                        onClick: (event) => {
+                          event.stopPropagation()
+                          setSubOpen(false)
+                          onOpenSubagent(index, entry.id)
+                        },
+                      },
+                      h('span', { className: 'dcs-subrow-dot', 'data-running': entry.running ? '1' : undefined, 'aria-hidden': 'true' }),
+                      h('span', { className: 'dcs-subrow-label' }, entry.label),
+                    ),
+                  ),
+                )
+              : null,
+          )
+        : null,
       h('span', { className: 'dcs-panehead-dot', 'data-running': running ? '1' : undefined, 'aria-hidden': 'true' }),
       h(
         'div',

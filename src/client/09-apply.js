@@ -341,7 +341,16 @@ function applyInner(ctx, config) {
   // 悬浮层的组件必须由这里包一层：SplitBoundary 与 services 都是 applyInner 的闭包变量，
   // 模块顶层的 OverlayShell 取不到（早先直接引用导致 shell.overlay 整层塌成 error 占位）。
   const OverlayBody = (props) =>
-    h(OverlayShell, Object.assign({}, props, { services, slot: SLOT_OVERLAY, Boundary: SplitBoundary }))
+    h(
+      OverlayShell,
+      Object.assign({}, props, {
+        services,
+        slot: SLOT_OVERLAY,
+        Boundary: SplitBoundary,
+        // 每屏信息头上的工作模式文案要跟界面语言走；locale 服务可能晚到，所以每次渲染都重取。
+        lang: currentLang(readService(ctx, 'locale')),
+      }),
+    )
 
   // 3) 悬浮网格本体：注册进 shell.overlay（帧级浮动层，默认点得穿），
   //    自己声明一个会话作用域子槽，才拿得到 SessionProvider / renderSlot。

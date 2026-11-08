@@ -18,7 +18,7 @@ function findConversationBody() {
   return document.querySelector('[data-conversation-content]')
 }
 
-/** 宿主顶栏第二行（页签行）的容器；找不到就返回 null，控制条留在网格上方。 */
+/** 宿主顶栏第二行（页签行）的容器；控制条挂在它右端，找不到就留在网格上方。 */
 function findHeaderBand() {
   if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return null
   const tabs = document.querySelector('[data-conversation-tabs]')
@@ -26,8 +26,14 @@ function findHeaderBand() {
   return tabs.parentElement
 }
 
+/** 当前界面语言：宿主 locale 服务给的是 zh / en / ja…；非中文一律按英文文案兜底。 */
+function currentLang(locale) {
+  const active = locale !== null && locale !== undefined && locale.snapshot !== undefined ? locale.snapshot.active : ''
+  return /^en/i.test(String(active === undefined || active === null ? '' : active)) ? 'en' : 'zh'
+}
+
 function OverlayShell(props) {
-  const { services, renderSlot, SessionProvider, useSessions, useWorkspaces, slot, Boundary } = props
+  const { services, renderSlot, SessionProvider, useSessions, useWorkspaces, slot, Boundary, lang } = props
   const state = useSplitState()
   const open = state.overlay === true
   const [host, setHost] = useState(null)
@@ -50,22 +56,22 @@ function OverlayShell(props) {
     }
     let alive = true
     let frame = 0
-    let current = null
+    let currentHost = null
     let currentBand = null
     const tick = () => {
       if (!alive) return
-      if (current === null || current.isConnected !== true) {
+      if (currentHost === null || currentHost.isConnected !== true) {
         const next = findConversationBody()
-        if (next !== current) {
-          current = next
+        if (next !== currentHost) {
+          currentHost = next
           setHost(next)
         }
       }
       if (currentBand === null || currentBand.isConnected !== true) {
-        const nextBand = findHeaderBand()
-        if (nextBand !== currentBand) {
-          currentBand = nextBand
-          setBand(nextBand)
+        const next = findHeaderBand()
+        if (next !== currentBand) {
+          currentBand = next
+          setBand(next)
         }
       }
       frame = window.requestAnimationFrame(tick)
@@ -157,7 +163,8 @@ function OverlayShell(props) {
     useWorkspaces,
     variant: 'overlay',
     slot,
-    // 控制条已经进顶栏了就不再在网格里画一遍；进不去（没有页签行）时留在网格上方。
+    lang: lang === 'en' ? 'en' : 'zh',
+    // 控制条已经进顶栏了就不再在网格里画一遍；进不去（顶栏还没渲染）时留在网格上方。
     hideControls: tools !== null,
     onCloseSplit: closeSplit,
   })
