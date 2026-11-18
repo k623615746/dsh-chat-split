@@ -349,8 +349,12 @@ html[data-dcs-drop="1"] [data-slot="main"] [data-conversation-session]{
 .dcs-panehead-tools .dcs-btn{width:22px;height:22px;border-radius:6px}
 
 /* 宿主会话面板不动，网格盖在正文区上，顶栏与页签因此保留 */
-/* 宿主会话正文区：隐藏它原来那份单会话滚动体，网格接管这块空间 */
-[data-conversation-content][data-dcs-host="1"] > [data-conversation-scroll]{display:none}
+/* 宿主会话正文区：隐藏它原来那份单会话滚动体，网格接管这块空间。
+   0.2.2 起宿主的滚动体被包进 hoc 槽 conversation.hero.frame（一层 display:contents 的 wrapper），
+   不再是 [data-conversation-content] 的直系子节点，所以这里用后代选择器；
+   网格里每屏自己的滚动体也在同一棵子树上，用下面第二条按特异性盖回来。 */
+[data-conversation-content][data-dcs-host="1"] [data-conversation-scroll]{display:none}
+.dcs-hostgrid [data-conversation-region="chat"] [data-conversation-scroll]{display:flex}
 .dcs-hostgrid{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 .dcs-hostgrid > .dcs-root{height:100%}
 .dcs-root[data-variant="overlay"]{padding:8px}

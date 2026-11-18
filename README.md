@@ -71,6 +71,7 @@ node scripts/check.mjs # 注册表 / 槽声明 / 持久化 key 的静态自检
 
 踩过的坑，都在源码注释里：
 
+- **DSH 0.2.2 起正文多包了一层**：`conversation.content` 内部先 `renderSlot('conversation.hero.frame', …)`（`hoc`/`root` 槽，官方 occupant 是 home-whale，其 `.layer{display:contents}`），宿主那份 `[data-conversation-scroll]` 因此**不再是** `[data-conversation-content]` 的直系子节点。隐藏宿主正文必须用后代选择器 `[data-conversation-content][data-dcs-host="1"] [data-conversation-scroll]{display:none}`，再用 `.dcs-hostgrid [data-conversation-region="chat"] [data-conversation-scroll]{display:flex}` 按特异性把网格内每屏的滚动体盖回来；写成 `>` 直系选择器会让旧会话从网格下透出来。
 - 分屏里 `phase` 只能给 `active`、`hero` 必须 false。宿主 `ConversationContent` 的 `inert` 判据是 `sessionId === void 0 || hero && chipTitle === void 0`；分屏没有它内部那份 workspace chip 状态，一旦判成 `hero` 就等于 disabled —— 输入框占位文字常驻、打不进字、发不出消息。
 - `shell.overlay` 的一个 occupant 抛错会把**整个浮动层**塌成 error 占位（其它插件的 toast/菜单一起消失）。错误边界与 `services` 都在 `applyInner()` 闭包里，模块顶层的 `OverlayShell` 取不到 —— 必须由 apply 里再包一层闭包组件（`OverlayBody`）把它们注进去。
 - 宿主槽名（`conversation.header` / `conversation.session` / `main.conversation`）一个都不许再声明：一个槽名只能被一个父 entry 的 children 表声明，抢了就让 ui-conversation 激活失败、13 个 entry 连锁 pending。
