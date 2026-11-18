@@ -1,6 +1,6 @@
 {
   "name": "dsh-chat-split",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DSH 分屏对话插件：左侧栏入口 + 最多 4 屏并行对话，拖拽会话入屏、1/2/3/4 屏自动排布、单屏铺满、每屏自带标题头，宿主顶栏与侧栏原样保留。",
   "type": "module",
   "main": "lib/index.js",
